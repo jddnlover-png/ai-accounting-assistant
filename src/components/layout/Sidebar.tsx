@@ -1,13 +1,29 @@
 import { NavLink } from "react-router-dom";
 
-const menus = [
-  { label: "대시보드", path: "/dashboard" },
-  { label: "거래처 관리", path: "/customers" },
-  { label: "품목 관리", path: "/products" },
-  { label: "거래명세표", path: "/statements" },
-  { label: "입금 관리", path: "/payments" },
-  { label: "미수금", path: "/receivables" },
-  { label: "설정", path: "/settings" },
+const menuGroups = [
+  {
+    title: "",
+    items: [{ label: "대시보드", path: "/dashboard", child: false }],
+  },
+  {
+    title: "등록 관리",
+    items: [
+      { label: "거래명세표", path: "/statements", child: true },
+      { label: "입금 관리", path: "/payments", child: true },
+    ],
+  },
+  {
+    title: "원장 관리",
+    items: [{ label: "미수금원장", path: "/receivables", child: true }],
+  },
+  {
+    title: "기준정보",
+    items: [
+      { label: "거래처 관리", path: "/customers", child: true },
+      { label: "품목 관리", path: "/products", child: true },
+      { label: "회사 설정", path: "/settings", child: true },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -16,17 +32,27 @@ export default function Sidebar() {
       <div style={styles.logo}>AI 경리비서</div>
 
       <nav style={styles.nav}>
-        {menus.map((menu) => (
-          <NavLink
-            key={menu.path}
-            to={menu.path}
-            style={({ isActive }) => ({
-              ...styles.link,
-              ...(isActive ? styles.activeLink : {}),
-            })}
-          >
-            {menu.label}
-          </NavLink>
+        {menuGroups.map((group) => (
+          <div key={group.title || "main"}>
+            {group.title && <div style={styles.groupTitle}>{group.title}</div>}
+
+            <div style={styles.groupItems}>
+              {group.items.map((menu) => (
+                <NavLink
+                  key={menu.path}
+                  to={menu.path}
+                  style={({ isActive }) => ({
+                    ...styles.link,
+                    ...(menu.child ? styles.childLink : {}),
+                    ...(isActive ? styles.activeLink : {}),
+                  })}
+                >
+                  {menu.child && <span style={styles.childMarker}>ㄴ</span>}
+                  <span>{menu.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
     </aside>
@@ -43,22 +69,47 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "20px 14px",
   },
   logo: {
-    fontSize: "20px",
-    fontWeight: 700,
-    marginBottom: "28px",
+    fontSize: "21px",
+    fontWeight: 800,
+    marginBottom: "32px",
     padding: "0 10px",
   },
   nav: {
     display: "flex",
     flexDirection: "column",
+    gap: "18px",
+  },
+  groupTitle: {
+    color: "#94a3b8",
+    fontSize: "13px",
+    fontWeight: 800,
+    marginBottom: "10px",
+    padding: "0 12px",
+  },
+  groupItems: {
+    display: "flex",
+    flexDirection: "column",
     gap: "6px",
   },
   link: {
-    color: "#d1d5db",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    color: "#e5e7eb",
     textDecoration: "none",
-    padding: "10px 12px",
+    padding: "11px 12px",
     borderRadius: "8px",
-    fontSize: "15px",
+    fontSize: "16px",
+    fontWeight: 500,
+  },
+  childLink: {
+    paddingLeft: "18px",
+  },
+  childMarker: {
+    color: "#94a3b8",
+    fontSize: "14px",
+    fontWeight: 700,
+    lineHeight: 1,
   },
   activeLink: {
     background: "#2563eb",
