@@ -84,6 +84,24 @@ export default function Reports() {
       <section style={styles.card}>
         <div style={styles.sectionHeader}>
           <div>
+            <h2 style={styles.sectionTitle}>내 보고서</h2>
+            <p style={styles.sectionDescription}>
+              직접 만든 맞춤 보고서가 여기에 표시됩니다.
+            </p>
+          </div>
+        </div>
+
+        <div style={styles.emptyBox}>
+          <div style={styles.emptyTitle}>아직 저장된 보고서가 없습니다</div>
+          <p style={styles.emptyText}>
+            새 보고서를 만들어 우리 회사에 맞는 원장과 보고서를 저장해보세요.
+          </p>
+        </div>
+      </section>
+
+      <section style={styles.card}>
+        <div style={styles.sectionHeader}>
+          <div>
             <h2 style={styles.sectionTitle}>프리미엄 보고서</h2>
             <p style={styles.sectionDescription}>
               품목 분석과 재고관리가 필요한 회사에서 사용할 수 있는 유료 확장 보고서입니다.
@@ -112,24 +130,6 @@ export default function Reports() {
               <div style={styles.lockedAction}>재고관리 상품에서 사용 가능</div>
             </button>
           ))}
-        </div>
-      </section>
-
-      <section style={styles.card}>
-        <div style={styles.sectionHeader}>
-          <div>
-            <h2 style={styles.sectionTitle}>내 보고서</h2>
-            <p style={styles.sectionDescription}>
-              직접 만든 맞춤 보고서가 여기에 표시됩니다.
-            </p>
-          </div>
-        </div>
-
-        <div style={styles.emptyBox}>
-          <div style={styles.emptyTitle}>아직 저장된 보고서가 없습니다</div>
-          <p style={styles.emptyText}>
-            새 보고서를 만들어 우리 회사에 맞는 원장과 보고서를 저장해보세요.
-          </p>
         </div>
       </section>
     </div>
