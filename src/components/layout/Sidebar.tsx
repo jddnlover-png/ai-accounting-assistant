@@ -13,8 +13,8 @@ const menuGroups = [
     ],
   },
   {
-    title: "원장 관리",
-    items: [{ label: "미수금원장", path: "/receivables", child: true }],
+    title: "보고서 관리",
+    items: [{ label: "내 보고서", path: "/reports", child: true }],
   },
   {
     title: "기준정보",

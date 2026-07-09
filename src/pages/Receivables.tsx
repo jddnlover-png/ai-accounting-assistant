@@ -8,15 +8,9 @@ const getPaidAmount = (statement: any) => Number(statement?.paid_amount || 0);
 
 const getRemainingAmount = (statement: any) => {
   const totalAmount = Number(statement?.total_amount || 0);
+  const paidAmount = getPaidAmount(statement);
 
-  if (
-    statement?.remaining_amount !== undefined &&
-    statement?.remaining_amount !== null
-  ) {
-    return Math.max(Number(statement.remaining_amount || 0), 0);
-  }
-
-  return Math.max(totalAmount - getPaidAmount(statement), 0);
+  return Math.max(totalAmount - paidAmount, 0);
 };
 
 const getStatus = (remainingAmount: number, totalAmount: number) => {

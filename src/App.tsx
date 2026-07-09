@@ -13,6 +13,7 @@ import CompanyInfo from "./pages/CompanyInfo";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Receivables from "./pages/Receivables";
+import Reports from "./pages/Reports";
 
 export default function App() {
   return (
@@ -76,6 +77,16 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+  path="/reports"
+  element={
+    <ProtectedRoute>
+      <AppLayout>
+        <Reports />
+      </AppLayout>
+    </ProtectedRoute>
+  }
+/>
       <Route
   path="/receivables"
   element={
