@@ -31,6 +31,100 @@ type OpenSectionKey =
   | "design"
   | "footer";
 
+interface SectionCardProps {
+  title: string;
+  sectionKey: OpenSectionKey;
+  description?: string;
+  isOpen: boolean;
+  onToggle: (key: OpenSectionKey) => void;
+  children: React.ReactNode;
+}
+
+function SectionCard({
+  title,
+  sectionKey,
+  description,
+  isOpen,
+  onToggle,
+  children,
+}: SectionCardProps) {
+  return (
+    <section
+      style={{
+        width: "100%",
+        flexShrink: 0,
+        border: "1px solid #e5e7eb",
+        borderRadius: "14px",
+        background: "#ffffff",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(sectionKey)}
+        style={{
+          width: "100%",
+          minHeight: "54px",
+          padding: "10px 16px",
+          border: "none",
+          background: "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: "#111827",
+              fontSize: "14px",
+              fontWeight: 800,
+            }}
+          >
+            {title}
+          </div>
+
+          {description && (
+            <div
+              style={{
+                marginTop: "3px",
+                color: "#6b7280",
+                fontSize: "11px",
+                lineHeight: 1.4,
+              }}
+            >
+              {description}
+            </div>
+          )}
+        </div>
+
+        <span
+          style={{
+            color: "#6b7280",
+            fontSize: "12px",
+          }}
+        >
+          {isOpen ? "▲" : "▼"}
+        </span>
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            padding: "0 16px 16px",
+          }}
+        >
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}
+
 const cloneReportSettings = (
   settings: ReportSettings,
 ): ReportSettings =>
@@ -121,13 +215,14 @@ const moveArrayItem = <T,>(
 const inputStyle: React.CSSProperties = {
   width: "100%",
   height: "40px",
+  padding: "0 12px",
   border: "1px solid #d1d5db",
   borderRadius: "8px",
-  padding: "0 12px",
   background: "#ffffff",
   color: "#111827",
   fontSize: "14px",
   outline: "none",
+  boxSizing: "border-box",
 };
 
 const selectStyle: React.CSSProperties = {
@@ -221,10 +316,13 @@ export default function ReportBuilderModal({
 
       return {
         ...nextSettings,
+
         name: shouldReplaceName
           ? nextSettings.name
           : current.name,
+
         favorite: current.favorite,
+
         permission: {
           ...current.permission,
         },
@@ -390,89 +488,6 @@ export default function ReportBuilderModal({
     onSave(settingsToSave);
   };
 
-  const SectionCard = ({
-    title,
-    sectionKey,
-    description,
-    children,
-  }: {
-    title: string;
-    sectionKey: OpenSectionKey;
-    description?: string;
-    children: React.ReactNode;
-  }) => (
-    <section
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: "14px",
-        background: "#ffffff",
-        overflow: "hidden",
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => toggleSection(sectionKey)}
-        style={{
-          width: "100%",
-          minHeight: "54px",
-          padding: "10px 16px",
-          border: "none",
-          background: "#ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
-          cursor: "pointer",
-          textAlign: "left",
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontSize: "14px",
-              fontWeight: 800,
-              color: "#111827",
-            }}
-          >
-            {title}
-          </div>
-
-          {description && (
-            <div
-              style={{
-                marginTop: "3px",
-                color: "#6b7280",
-                fontSize: "11px",
-                lineHeight: 1.4,
-              }}
-            >
-              {description}
-            </div>
-          )}
-        </div>
-
-        <span
-          style={{
-            color: "#6b7280",
-            fontSize: "12px",
-          }}
-        >
-          {openSections[sectionKey] ? "▲" : "▼"}
-        </span>
-      </button>
-
-      {openSections[sectionKey] && (
-        <div
-          style={{
-            padding: "0 16px 16px",
-          }}
-        >
-          {children}
-        </div>
-      )}
-    </section>
-  );
-
   const renderColumnSetting = (
     column: ReportColumnDefinition,
     index: number,
@@ -481,21 +496,29 @@ export default function ReportBuilderModal({
       settings.columnWidth[column.key] ??
       column.width;
 
+    const isFirst = index === 0;
+    const isLast =
+      index === settings.columns.length - 1;
+
     return (
       <div
         key={column.key}
         style={{
-          padding: "12px",
+          width: "100%",
+          padding: "10px 11px",
           border: "1px solid #e5e7eb",
           borderRadius: "10px",
           background: "#f9fafb",
+          boxSizing: "border-box",
         }}
       >
         <div
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns:
+              "22px minmax(90px, 1fr) 108px 69px",
             alignItems: "center",
-            gap: "10px",
+            gap: "8px",
           }}
         >
           <input
@@ -510,6 +533,7 @@ export default function ReportBuilderModal({
             style={{
               width: "17px",
               height: "17px",
+              margin: 0,
               cursor: "pointer",
             }}
           />
@@ -517,15 +541,18 @@ export default function ReportBuilderModal({
           <div
             style={{
               minWidth: 0,
-              flex: 1,
             }}
           >
             <div
               style={{
                 color: "#111827",
                 fontSize: "13px",
-                fontWeight: 700,
+                fontWeight: 800,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
+              title={column.label}
             >
               {column.label}
             </div>
@@ -534,91 +561,21 @@ export default function ReportBuilderModal({
               style={{
                 marginTop: "2px",
                 color: "#9ca3af",
-                fontSize: "11px",
+                fontSize: "10px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
+              title={column.key}
             >
               {column.key}
             </div>
           </div>
 
-          <button
-            type="button"
-            disabled={index === 0}
-            onClick={() =>
-              handleMoveColumn(index, "up")
-            }
-            style={{
-              width: "32px",
-              height: "32px",
-              border: "1px solid #d1d5db",
-              borderRadius: "7px",
-              background:
-                index === 0 ? "#f3f4f6" : "#ffffff",
-              color:
-                index === 0 ? "#9ca3af" : "#374151",
-              cursor:
-                index === 0 ? "not-allowed" : "pointer",
-            }}
-            aria-label={`${column.label} 위로 이동`}
-          >
-            ▲
-          </button>
-
-          <button
-            type="button"
-            disabled={
-              index === settings.columns.length - 1
-            }
-            onClick={() =>
-              handleMoveColumn(index, "down")
-            }
-            style={{
-              width: "32px",
-              height: "32px",
-              border: "1px solid #d1d5db",
-              borderRadius: "7px",
-              background:
-                index === settings.columns.length - 1
-                  ? "#f3f4f6"
-                  : "#ffffff",
-              color:
-                index === settings.columns.length - 1
-                  ? "#9ca3af"
-                  : "#374151",
-              cursor:
-                index === settings.columns.length - 1
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-            aria-label={`${column.label} 아래로 이동`}
-          >
-            ▼
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 120px",
-            alignItems: "center",
-            gap: "12px",
-            marginTop: "12px",
-          }}
-        >
-          <label
-            htmlFor={`column-width-${column.key}`}
-            style={{
-              color: "#6b7280",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            컬럼 폭
-          </label>
-
           <div
             style={{
               position: "relative",
+              width: "100%",
             }}
           >
             <input
@@ -634,10 +591,19 @@ export default function ReportBuilderModal({
                   event.target.value,
                 )
               }
+              aria-label={`${column.label} 컬럼 폭`}
               style={{
-                ...inputStyle,
-                paddingRight: "34px",
+                width: "100%",
+                height: "34px",
+                padding: "0 29px 0 8px",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                background: "#ffffff",
+                color: "#111827",
+                fontSize: "12px",
                 textAlign: "right",
+                outline: "none",
+                boxSizing: "border-box",
               }}
             />
 
@@ -645,15 +611,81 @@ export default function ReportBuilderModal({
               style={{
                 position: "absolute",
                 top: "50%",
-                right: "10px",
+                right: "8px",
                 transform: "translateY(-50%)",
                 color: "#9ca3af",
-                fontSize: "11px",
+                fontSize: "10px",
                 pointerEvents: "none",
               }}
             >
               px
             </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "32px 32px",
+              gap: "5px",
+            }}
+          >
+            <button
+              type="button"
+              disabled={isFirst}
+              onClick={() =>
+                handleMoveColumn(index, "up")
+              }
+              aria-label={`${column.label} 위로 이동`}
+              title="위로 이동"
+              style={{
+                width: "32px",
+                height: "32px",
+                padding: 0,
+                border: "1px solid #d1d5db",
+                borderRadius: "7px",
+                background: isFirst
+                  ? "#f3f4f6"
+                  : "#ffffff",
+                color: isFirst
+                  ? "#cbd5e1"
+                  : "#374151",
+                cursor: isFirst
+                  ? "not-allowed"
+                  : "pointer",
+                fontSize: "10px",
+              }}
+            >
+              ▲
+            </button>
+
+            <button
+              type="button"
+              disabled={isLast}
+              onClick={() =>
+                handleMoveColumn(index, "down")
+              }
+              aria-label={`${column.label} 아래로 이동`}
+              title="아래로 이동"
+              style={{
+                width: "32px",
+                height: "32px",
+                padding: 0,
+                border: "1px solid #d1d5db",
+                borderRadius: "7px",
+                background: isLast
+                  ? "#f3f4f6"
+                  : "#ffffff",
+                color: isLast
+                  ? "#cbd5e1"
+                  : "#374151",
+                cursor: isLast
+                  ? "not-allowed"
+                  : "pointer",
+                fontSize: "10px",
+              }}
+            >
+              ▼
+            </button>
           </div>
         </div>
       </div>
@@ -670,17 +702,18 @@ export default function ReportBuilderModal({
         position: "fixed",
         inset: 0,
         zIndex: 20000,
-        padding: "16px",
+        padding: "12px",
         background: "rgba(0, 0, 0, 0.45)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        boxSizing: "border-box",
       }}
     >
       <div
         style={{
-          width: "min(96vw, 1480px)",
-          height: "92vh",
+          width: "min(98vw, 1560px)",
+          height: "94vh",
           overflow: "hidden",
           background: "#ffffff",
           borderRadius: "18px",
@@ -692,7 +725,7 @@ export default function ReportBuilderModal({
       >
         <div
           style={{
-            minHeight: "68px",
+            minHeight: "64px",
             padding: "0 20px",
             borderBottom: "1px solid #e5e7eb",
             background: "#ffffff",
@@ -739,9 +772,9 @@ export default function ReportBuilderModal({
           style={{
             display: "grid",
             gridTemplateColumns:
-              "minmax(390px, 0.85fr) minmax(560px, 1.15fr)",
-            gap: "16px",
-            padding: "16px 20px",
+              "minmax(400px, 0.72fr) minmax(660px, 1.28fr)",
+            gap: "14px",
+            padding: "14px 16px",
             flex: 1,
             minHeight: 0,
             overflow: "hidden",
@@ -750,17 +783,23 @@ export default function ReportBuilderModal({
         >
           <div
             style={{
-              display: "grid",
-              gap: "10px",
-              alignContent: "start",
+              minHeight: 0,
               overflowY: "auto",
-              paddingRight: "6px",
+              overflowX: "hidden",
+              paddingRight: "5px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              scrollBehavior: "auto",
+              overflowAnchor: "none",
             }}
           >
             <SectionCard
               title="📄 기본 설정"
               sectionKey="basic"
               description="보고서 종류와 이름을 설정합니다."
+              isOpen={openSections.basic}
+              onToggle={toggleSection}
             >
               <div
                 style={{
@@ -904,6 +943,8 @@ export default function ReportBuilderModal({
               title="📋 표시 설정"
               sectionKey="visibility"
               description="보고서 상단과 하단의 표시 항목을 선택합니다."
+              isOpen={openSections.visibility}
+              onToggle={toggleSection}
             >
               <div
                 style={{
@@ -989,6 +1030,8 @@ export default function ReportBuilderModal({
               title="📅 조회기간"
               sectionKey="period"
               description="보고서를 열 때 사용할 기본 기간을 설정합니다."
+              isOpen={openSections.period}
+              onToggle={toggleSection}
             >
               <div
                 style={{
@@ -1053,12 +1096,15 @@ export default function ReportBuilderModal({
               title={`📐 컬럼 설정 (${visibleColumnCount}/${settings.columns.length})`}
               sectionKey="columns"
               description="표시 여부, 컬럼 순서와 폭을 설정합니다."
+              isOpen={openSections.columns}
+              onToggle={toggleSection}
             >
               {settings.columns.length > 0 ? (
                 <div
                   style={{
-                    display: "grid",
-                    gap: "9px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
                   }}
                 >
                   {settings.columns.map(
@@ -1103,6 +1149,8 @@ export default function ReportBuilderModal({
               title="🎨 디자인"
               sectionKey="design"
               description="글자 크기, 테마와 테두리를 설정합니다."
+              isOpen={openSections.design}
+              onToggle={toggleSection}
             >
               <div
                 style={{
@@ -1265,6 +1313,8 @@ export default function ReportBuilderModal({
               title="📝 하단 문구"
               sectionKey="footer"
               description="보고서 마지막에 표시할 내용을 입력합니다."
+              isOpen={openSections.footer}
+              onToggle={toggleSection}
             >
               <textarea
                 value={settings.footer.text}
@@ -1293,6 +1343,7 @@ export default function ReportBuilderModal({
                   lineHeight: 1.5,
                   resize: "vertical",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
 
@@ -1319,7 +1370,7 @@ export default function ReportBuilderModal({
           <div
             style={{
               minHeight: 0,
-              padding: "12px",
+              padding: "10px",
               border: "1px solid #e5e7eb",
               borderRadius: "14px",
               background: "#ffffff",
@@ -1330,7 +1381,8 @@ export default function ReportBuilderModal({
           >
             <div
               style={{
-                marginBottom: "10px",
+                marginBottom: "8px",
+                flexShrink: 0,
               }}
             >
               <h4
@@ -1351,7 +1403,8 @@ export default function ReportBuilderModal({
                   fontSize: "11px",
                 }}
               >
-                왼쪽 설정을 변경하면 바로 반영됩니다.
+                보고서 전체가 화면 폭에 맞춰 자동으로
+                축소됩니다.
               </p>
             </div>
 
@@ -1359,7 +1412,7 @@ export default function ReportBuilderModal({
               style={{
                 flex: 1,
                 minHeight: 0,
-                overflow: "auto",
+                overflow: "hidden",
               }}
             >
               <ReportPreview
@@ -1372,7 +1425,7 @@ export default function ReportBuilderModal({
 
         <div
           style={{
-            minHeight: "64px",
+            minHeight: "62px",
             padding: "0 20px",
             borderTop: "1px solid #e5e7eb",
             background: "#ffffff",

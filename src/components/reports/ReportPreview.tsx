@@ -1,17 +1,25 @@
-import { useMemo } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type {
   ReportColumnDefinition,
   ReportSettings,
 } from "../../types/reportSettings";
 
-type ReportPreviewRow = Record<string, string | number | null | undefined>;
+type ReportPreviewRow = Record<
+  string,
+  string | number | null | undefined
+>;
 
-type ReportPreviewProps = {
+interface ReportPreviewProps {
   settings: ReportSettings;
   rows?: ReportPreviewRow[];
   organizationName?: string;
   previewTitle?: string;
-};
+}
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("ko-KR").format(value);
@@ -20,7 +28,11 @@ const formatPreviewValue = (
   value: string | number | null | undefined,
   columnKey: string,
 ) => {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return "-";
   }
 
@@ -49,7 +61,10 @@ const formatPreviewValue = (
 
   if (
     typeof value === "number" &&
-    [...currencyColumnKeys, ...quantityColumnKeys].includes(columnKey)
+    [
+      ...currencyColumnKeys,
+      ...quantityColumnKeys,
+    ].includes(columnKey)
   ) {
     return formatCurrency(value);
   }
@@ -197,8 +212,10 @@ const getBorderWidth = (
   switch (borderWidth) {
     case "thin":
       return "1px";
+
     case "bold":
       return "2px";
+
     case "normal":
     default:
       return "1.5px";
@@ -211,7 +228,7 @@ const getThemeStyles = (
   switch (template) {
     case "modern":
       return {
-        headerBackground: "#f1f5f9",
+        headerBackground: "#eef2f7",
         titleWeight: 700,
         containerRadius: "12px",
       };
@@ -237,7 +254,8 @@ const getColumnWidth = (
   column: ReportColumnDefinition,
   settings: ReportSettings,
 ) => {
-  const savedWidth = settings.columnWidth[column.key];
+  const savedWidth =
+    settings.columnWidth[column.key];
 
   if (
     typeof savedWidth === "number" &&
@@ -256,31 +274,112 @@ export function ReportPreview({
   organizationName = "회사명",
   previewTitle,
 }: ReportPreviewProps) {
+  const previewViewportRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const [previewScale, setPreviewScale] =
+    useState(1);
+
   const visibleColumns = useMemo(
-    () => settings.columns.filter((column) => column.visible),
+    () =>
+      settings.columns.filter(
+        (column) => column.visible,
+      ),
     [settings.columns],
   );
 
   const previewRows = useMemo(
-    () => rows ?? getDefaultPreviewRows(settings.type),
+    () =>
+      rows ??
+      getDefaultPreviewRows(settings.type),
     [rows, settings.type],
   );
 
   const totalTableWidth = useMemo(
     () =>
       visibleColumns.reduce(
-        (total, column) => total + getColumnWidth(column, settings),
+        (total, column) =>
+          total +
+          getColumnWidth(column, settings),
         0,
       ),
     [settings, visibleColumns],
   );
 
-  const borderWidth = getBorderWidth(settings.border.borderWidth);
-  const themeStyles = getThemeStyles(settings.theme.template);
+  const reportCanvasWidth = useMemo(
+    () =>
+      Math.max(
+        totalTableWidth + 56,
+        760,
+      ),
+    [totalTableWidth],
+  );
+
+  const borderWidth = getBorderWidth(
+    settings.border.borderWidth,
+  );
+
+  const themeStyles = getThemeStyles(
+    settings.theme.template,
+  );
+
+  useEffect(() => {
+    const viewport =
+      previewViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const updateScale = () => {
+      const availableWidth =
+        viewport.clientWidth - 24;
+
+      const availableHeight =
+        viewport.clientHeight - 24;
+
+      if (
+        availableWidth <= 0 ||
+        availableHeight <= 0
+      ) {
+        return;
+      }
+
+      const widthScale =
+        availableWidth / reportCanvasWidth;
+
+      const heightScale =
+        availableHeight / 690;
+
+      const nextScale = Math.min(
+        widthScale,
+        heightScale,
+        1,
+      );
+
+      setPreviewScale(
+        Math.max(nextScale, 0.45),
+      );
+    };
+
+    updateScale();
+
+    const resizeObserver =
+      new ResizeObserver(updateScale);
+
+    resizeObserver.observe(viewport);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [reportCanvasWidth]);
 
   const periodText = useMemo(() => {
-    const startDate = settings.filter.period?.startDate;
-    const endDate = settings.filter.period?.endDate;
+    const startDate =
+      settings.filter.period?.startDate;
+
+    const endDate =
+      settings.filter.period?.endDate;
 
     if (startDate && endDate) {
       return `${startDate} ~ ${endDate}`;
@@ -308,50 +407,124 @@ export function ReportPreview({
     }
 
     if (settings.filter.status) {
-      filters.push(`상태: ${settings.filter.status}`);
+      filters.push(
+        `상태: ${settings.filter.status}`,
+      );
     }
 
-    return filters.length > 0 ? filters.join(" · ") : "전체 거래처";
-  }, [settings.filter.customerId, settings.filter.status]);
+    return filters.length > 0
+      ? filters.join(" · ")
+      : "전체 거래처";
+  }, [
+    settings.filter.customerId,
+    settings.filter.status,
+  ]);
 
   if (visibleColumns.length === 0) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-dashed bg-muted/20 p-6">
-        <div className="text-center">
-          <p className="font-medium text-foreground">
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: "320px",
+          padding: "24px",
+          border: "1px dashed #cbd5e1",
+          borderRadius: "10px",
+          background: "#f8fafc",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxSizing: "border-box",
+          textAlign: "center",
+        }}
+      >
+        <div>
+          <p
+            style={{
+              margin: 0,
+              color: "#111827",
+              fontSize: "14px",
+              fontWeight: 700,
+            }}
+          >
             표시할 컬럼이 없습니다.
           </p>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            보고서 설정에서 하나 이상의 컬럼을 선택하세요.
+          <p
+            style={{
+              margin: "6px 0 0",
+              color: "#6b7280",
+              fontSize: "12px",
+            }}
+          >
+            보고서 설정에서 하나 이상의 컬럼을
+            선택하세요.
           </p>
         </div>
       </div>
     );
   }
 
+  const scaledCanvasWidth =
+    reportCanvasWidth * previewScale;
+
+  const scaledCanvasHeight =
+    690 * previewScale;
+
   return (
-    <div className="w-full overflow-hidden rounded-lg border bg-muted/20 p-3 sm:p-4">
-      <div className="overflow-auto">
+    <div
+      ref={previewViewportRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: "480px",
+        overflow: "hidden",
+        padding: "12px",
+        border: "1px solid #e5e7eb",
+        borderRadius: "10px",
+        background: "#f8fafc",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          width: scaledCanvasWidth,
+          height: scaledCanvasHeight,
+          margin: "0 auto",
+          position: "relative",
+        }}
+      >
         <div
-          className="mx-auto bg-white text-slate-950 shadow-sm"
           style={{
-            width: "100%",
-            minWidth: Math.max(totalTableWidth + 48, 720),
-            maxWidth: 1120,
-            borderRadius: themeStyles.containerRadius,
-            padding: settings.theme.template === "compact" ? 20 : 28,
+            width: reportCanvasWidth,
+            minHeight: "690px",
+            padding:
+              settings.theme.template ===
+              "compact"
+                ? "20px"
+                : "28px",
+            borderRadius:
+              themeStyles.containerRadius,
+            background: "#ffffff",
+            color: "#0f172a",
+            boxShadow:
+              "0 6px 18px rgba(15, 23, 42, 0.08)",
+            transform: `scale(${previewScale})`,
+            transformOrigin: "top left",
+            boxSizing: "border-box",
           }}
         >
-          {settings.visibility.showOrganizationInfo && (
+          {settings.visibility
+            .showOrganizationInfo && (
             <div
               style={{
-                marginBottom: 12,
+                marginBottom: "12px",
+                color: "#475569",
                 fontSize: Math.max(
-                  settings.typography.bodyFontSize - 1,
+                  settings.typography.bodyFontSize -
+                    1,
                   9,
                 ),
-                color: "#475569",
               }}
             >
               {organizationName}
@@ -362,9 +535,12 @@ export function ReportPreview({
             <h2
               style={{
                 margin: 0,
+                color: "#0f172a",
                 textAlign: "center",
-                fontSize: settings.typography.titleFontSize,
-                fontWeight: themeStyles.titleWeight,
+                fontSize:
+                  settings.typography.titleFontSize,
+                fontWeight:
+                  themeStyles.titleWeight,
                 lineHeight: 1.3,
               }}
             >
@@ -374,13 +550,18 @@ export function ReportPreview({
 
           <div
             style={{
+              minHeight: "20px",
+              marginTop: "18px",
+              marginBottom: "10px",
               display: "flex",
               justifyContent: "space-between",
-              gap: 16,
-              marginTop: 18,
-              marginBottom: 10,
-              fontSize: Math.max(settings.typography.bodyFontSize - 1, 9),
+              gap: "16px",
               color: "#475569",
+              fontSize: Math.max(
+                settings.typography.bodyFontSize -
+                  1,
+                9,
+              ),
             }}
           >
             {settings.visibility.showPeriod ? (
@@ -389,17 +570,22 @@ export function ReportPreview({
               <span />
             )}
 
-            {settings.visibility.showFilterSummary && (
-              <span>조회조건: {filterSummary}</span>
+            {settings.visibility
+              .showFilterSummary && (
+              <span>
+                조회조건: {filterSummary}
+              </span>
             )}
           </div>
 
           <table
             style={{
-              width: "100%",
+              width: totalTableWidth,
+              minWidth: "100%",
               tableLayout: "fixed",
               borderCollapse: "collapse",
-              fontSize: settings.typography.bodyFontSize,
+              fontSize:
+                settings.typography.bodyFontSize,
             }}
           >
             <colgroup>
@@ -407,7 +593,10 @@ export function ReportPreview({
                 <col
                   key={column.key}
                   style={{
-                    width: getColumnWidth(column, settings),
+                    width: getColumnWidth(
+                      column,
+                      settings,
+                    ),
                   }}
                 />
               ))}
@@ -419,14 +608,16 @@ export function ReportPreview({
                   <th
                     key={column.key}
                     style={{
-                      border: `${borderWidth} solid #94a3b8`,
-                      background: themeStyles.headerBackground,
                       padding:
-                        settings.theme.template === "compact"
+                        settings.theme.template ===
+                        "compact"
                           ? "6px 5px"
                           : "8px 6px",
+                      border: `${borderWidth} solid #94a3b8`,
+                      background:
+                        themeStyles.headerBackground,
                       textAlign: "center",
-                      fontWeight: 600,
+                      fontWeight: 700,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -438,45 +629,59 @@ export function ReportPreview({
 
             <tbody>
               {previewRows.length > 0 ? (
-                previewRows.map((row, rowIndex) => (
-                  <tr key={`preview-row-${rowIndex}`}>
-                    {visibleColumns.map((column) => (
-                      <td
-                        key={`${rowIndex}-${column.key}`}
-                        style={{
-                          border: `${borderWidth} solid #cbd5e1`,
-                          padding:
-                            settings.theme.template === "compact"
-                              ? "5px"
-                              : "7px 6px",
-                          textAlign: column.align ?? "left",
-                          verticalAlign: "middle",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                        title={formatPreviewValue(
-                          row[column.key],
-                          column.key,
-                        )}
-                      >
-                        {formatPreviewValue(
-                          row[column.key],
-                          column.key,
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                previewRows.map(
+                  (row, rowIndex) => (
+                    <tr
+                      key={`preview-row-${rowIndex}`}
+                    >
+                      {visibleColumns.map(
+                        (column) => (
+                          <td
+                            key={`${rowIndex}-${column.key}`}
+                            title={formatPreviewValue(
+                              row[column.key],
+                              column.key,
+                            )}
+                            style={{
+                              padding:
+                                settings.theme
+                                  .template ===
+                                "compact"
+                                  ? "5px"
+                                  : "7px 6px",
+                              border: `${borderWidth} solid #cbd5e1`,
+                              textAlign:
+                                column.align ??
+                                "left",
+                              verticalAlign:
+                                "middle",
+                              overflow: "hidden",
+                              textOverflow:
+                                "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {formatPreviewValue(
+                              row[column.key],
+                              column.key,
+                            )}
+                          </td>
+                        ),
+                      )}
+                    </tr>
+                  ),
+                )
               ) : (
                 <tr>
                   <td
-                    colSpan={visibleColumns.length}
+                    colSpan={
+                      visibleColumns.length
+                    }
                     style={{
-                      border: `${borderWidth} solid #cbd5e1`,
                       padding: "40px 16px",
-                      textAlign: "center",
+                      border: `${borderWidth} solid #cbd5e1`,
                       color: "#64748b",
+                      textAlign: "center",
                     }}
                   >
                     미리보기 데이터가 없습니다.
@@ -489,12 +694,13 @@ export function ReportPreview({
           {settings.visibility.showFooter && (
             <div
               style={{
-                minHeight: 24,
-                marginTop: 16,
-                fontSize: settings.typography.footerFontSize,
+                minHeight: "24px",
+                marginTop: "16px",
+                color: "#475569",
+                fontSize:
+                  settings.typography.footerFontSize,
                 lineHeight: 1.5,
                 whiteSpace: "pre-wrap",
-                color: "#475569",
               }}
             >
               {settings.footer.text ||
